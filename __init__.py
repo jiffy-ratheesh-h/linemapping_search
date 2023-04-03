@@ -1,2 +1,1 @@
-from .main import LineNameSearch
-from .main import CreatitveNameSearch
+from .main import lineNameMatch, CreatitveNameSearch, LineNameFilter

@@ -24,6 +24,29 @@ def club_line_name(line_name):
         return new_line_split
     else:
         return False
+
+def club_three_line_name(line_name):
+    line_name_split = str(line_name).split(" ")
+    new_line_split = []
+    for i in range(len(line_name_split)-2):
+        if(len(line_name_split[i]) == 1):
+            try:
+                word = line_name_split[i-1] +line_name_split[i] + line_name_split[i+1]
+                new_line_split.append(word)
+            except:
+                pass
+        if(len(line_name_split[i]) >= 3 and len(line_name_split[i+1])>=1):
+            word = line_name_split[i] +line_name_split[i+1] +line_name_split[i+2]
+            new_line_split.append(word)
+            word = line_name_split[i] + " " + line_name_split[i+1] + " " + line_name_split[i+2]
+            new_line_split.append(word)
+        else:
+            word = line_name_split[i]+" " +line_name_split[i+1]
+            new_line_split.append(word)
+    if(len(new_line_split)>=1):
+        return new_line_split
+    else:
+        return False
     
 def unique_list(list_items):
     unique_list = []
@@ -133,6 +156,25 @@ def re_search(new_line_name,new_placement_name):
         return response
     else:
         return False
+
+def re_three_search(new_line_name,new_placement_name):
+    line_name_split = club_three_line_name(new_line_name)
+    if(line_name_split != False):
+        for item in line_name_split:
+            response = SearchAlgorithms(item,new_placement_name).search_forward()
+            if(response['status'] == False):
+                response = SearchAlgorithms(item,new_placement_name).search_backward()
+                if(response['status'] == False):
+                    response = SearchAlgorithms(item,new_placement_name).search_contains()
+                    if(response['status'] == True):
+                        return response
+                else:
+                    return response
+            else:
+                return response
+        return response
+    else:
+        return False
     
 def check_with_mapped_line_name(mapped_line_name,new_line_name,new_placement_name):
     try:
@@ -225,14 +267,14 @@ def split_line_name(line_name):
         return False
 
 def remove_common_words(original_line_name, filter_line_name_data):
-    # filtered_line_name = [str(item['Orginal_Line_Name']).lower() for item in filter_line_name_data]
+    # filtered_line_name = [str(item['Original_Line_Name']).lower() for item in filter_line_name_data]
     original_line_name = str(original_line_name).lower()
     original_line_name_split = str(original_line_name).split(" ")
     if(len(original_line_name_split) >= 1):
         for word in original_line_name_split:
             count = 0
             for line_name in filter_line_name_data:
-                if(word in str(line_name['Orginal_Line_Name']).lower()):
+                if(word in str(line_name['Original_Line_Name']).lower()):
                     count += 1
             if(count == len(filter_line_name_data)):
                 original_line_name_split.remove(word)
@@ -356,7 +398,7 @@ def check_priority(keyword,exlusion_list,priority_list):
     keyword_list = str(keyword).lower().split(',')
     if(len(keyword_list) == 1):
         if(len(keyword_list[0]) >= 3):
-            if(keyword in new_exlusion_list):
+            if(keyword in new_exlusion_list or len(keyword) <= 2):
                 return False
             else:
                 return True
@@ -411,7 +453,7 @@ def search_here(traffic,track,traffic_data=[]):
             response = re_response
 
         if(int(response['match_count']) == 1 or response['status'] == False):
-            re_response = check_with_original_line_name(traffic['Orginal_Line_Name'],track['Placement_Name'],traffic_data)
+            re_response = check_with_original_line_name(traffic['Original_Line_Name'],track['Placement_Name'],traffic_data)
             if(re_response != False and re_response['status'] == True):
                 response = re_response
                 
@@ -421,9 +463,13 @@ def search_here(traffic,track,traffic_data=[]):
                 response = re_response
     elif(response['status'] == False):
         # print("Original Line Namr check")
-        re_response = check_with_original_line_name(traffic['Orginal_Line_Name'],track['Placement_Name'],traffic_data)
+        re_response = check_with_original_line_name(traffic['Original_Line_Name'],track['Placement_Name'],traffic_data)
         if(re_response != False and re_response['status'] == True):
             response = re_response
+    if(response['status'] == False):
+        re_response = re_three_search(traffic['New_Line_Name'],track['Placement_Name'])
+        if(re_response != False and re_response['status'] == True):
+                response = re_response
     if(response['status'] == False):
             # print("check in Mapped Line Name")
             re_response = check_with_mapped_line_name(traffic['Mapped_Line_Name'],traffic['New_Line_Name'],track['Placement_Name'])

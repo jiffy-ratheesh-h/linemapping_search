@@ -1,5 +1,9 @@
 from jiffy_search import CheckLineName, SearchAlgorithms
-from _helper import *
+from ._helper import *
+from datetime import datetime
+import csv
+import os
+import pandas as pd
 
 def line_name_search(traffic,track_data,traffic_data):
     write_data = []
@@ -10,8 +14,8 @@ def line_name_search(traffic,track_data,traffic_data):
             response['word_match'] = ""
         payload = {
             'Status':response['status'],
-            'Original Line Name':traffic['Orginal_Line_Name'],
-            'Original Placement Name':track['Orginal_Placement_Name'],
+            'Original Line Name':traffic['Original_Line_Name'],
+            'Original Placement Name':track['Original_Placement_Name'],
             'Line Name':traffic['New_Line_Name'],
             'Mapped Line Name':traffic['Mapped_Line_Name'],
             'Placement Name':response['target'],
@@ -46,12 +50,20 @@ def rank_based_filter(write_data):
     new_filtered_write_data = list(filter(lambda d: int(d['Rank']) == 1 and d['Status'] == True, write_data))
     for item in new_filtered_write_data:
         new_response_track.append(item['Track'])
-    return new_filtered_write_data
+    return new_response_track
 
 
 def creative_name_search(keyword,target):
     response = CheckLineName(keyword,target).find_match()
-    if(response['Status'] == True):
+    print(response)
+    if(response['status'] == True):
         return True
     else:
         return False
+    
+
+def  write_excel_data(response,file_path,traffic):
+    df2 = pd.DataFrame(response)
+    with pd.ExcelWriter(file_path) as writer:  
+        df2.to_excel(writer, sheet_name=str(traffic['Operative_ID']))
+        return True
