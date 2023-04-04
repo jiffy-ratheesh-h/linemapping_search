@@ -12,7 +12,7 @@ class LineNameFilter:
     
     def filter_matched(self):
        response = line_name_search(self.traffic,self.track_data,self.traffic_data)
-       file_path = os.path.join(self.case_path,self.master_uuid + "_linename_search_response.csv")
+       file_path = os.path.join(self.case_path,self.master_uuid + "_linename_search_response.xlsx")
        write_excel_data(response,file_path,self.traffic)
        final_response = rank_based_filter(response)
        return final_response
