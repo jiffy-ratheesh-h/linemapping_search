@@ -61,11 +61,14 @@ def creative_name_search(keyword,target):
     
 
 def  write_excel_data(response,file_path,traffic):
-    if(os.path.exists(file_path) == True):
-        df2 = pd.DataFrame(response)
-        with pd.ExcelWriter(file_path, engine='openpyxl', mode='a') as writer:  
-            df2.to_excel(writer, sheet_name=str(traffic['Operative_ID']))
-    else:
-        df2 = pd.DataFrame(response)
-        with pd.ExcelWriter(file_path) as writer:  
-            df2.to_excel(writer, sheet_name=str(traffic['Operative_ID']))
+    try:
+        if(os.path.exists(file_path) == True):
+            df2 = pd.DataFrame(response)
+            with pd.ExcelWriter(file_path, engine='openpyxl', mode='a') as writer:  
+                df2.to_excel(writer, sheet_name=str(traffic['Operative_ID']))
+        else:
+            df2 = pd.DataFrame(response)
+            with pd.ExcelWriter(file_path) as writer:  
+                df2.to_excel(writer, sheet_name=str(traffic['Operative_ID']))
+    except:
+        pass
