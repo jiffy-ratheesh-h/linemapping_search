@@ -9,7 +9,8 @@ def line_name_search(traffic,track_data,traffic_data):
     write_data = []
     for track in track_data:
         response = search_here(traffic,track,traffic_data)
-        match_keyword = decode_match_keyword(response)
+        match_keyword = response['match_keyword'].strip()
+        print(match_keyword)
         if(response['word_match'] is None):
             response['word_match'] = ""
         payload = {

@@ -20,6 +20,8 @@ def club_line_name(line_name):
         if(len(line_name_split[i]) >= 3 and len(line_name_split[i+1])>=3):
             word = line_name_split[i] + " "+line_name_split[i+1]
             new_line_split.append(word)
+            word = line_name_split[i] + line_name_split[i+1]
+            new_line_split.append(word)
     if(len(new_line_split)>=1):
         return new_line_split
     else:
@@ -57,6 +59,7 @@ def unique_list(list_items):
 
 exlusion_list = "a VCBS|EyeQ|OCR|Adults|Video|Standard|640|480|PMNT|Local|Entertainment|VCBS|pls|note|dart|dates|please|dark|Plus|News|Exclusion|dma|vantage|25-54|18-54|:15|15s|:30|30s|:60|:60s|15|30|60|san|CDSM|CDHC|ch22|sports|can|desktop|mobile|ott|City|Falls|Desk|Mob|zips|Zips|Skip|Non|is|or|an|am|iam|auto|bay"
 priority_list = "city|"
+mandatory_list = "anniversary|campus"
 delimetter = ["`",'~','|','@','#','$','%','&','^','*','(',')','_','-',' ',',','-'," "]
 
 def clean_line_name(x,original_line_name):
@@ -140,6 +143,7 @@ def remove_starting_chars(placement_name):
 
 def re_search(new_line_name,new_placement_name):
     line_name_split = club_line_name(new_line_name)
+    # print(line_name_split)
     if(line_name_split != False):
         for item in line_name_split:
             response = SearchAlgorithms(item,new_placement_name).search_forward()
@@ -321,6 +325,16 @@ def check_with_original_line_name(original_line_name,new_placement_name,filter_l
     try:
         if(len(original_line_name_split[1]) >= 2):
             response = CheckLineName(original_line_name,new_placement_name).find_match()
+            if(response['status'] == False or response['match_count'] == 1):
+                clubbed_line_name = club_three_line_name(original_line_name)
+                # print(clubbed_line_name)
+                if(clubbed_line_name is not False):
+                    for word in clubbed_line_name:
+                        response = CheckLineName(word,new_placement_name).find_match()
+                        if(response['status'] == True):
+                            return response
+                else:
+                    return response
         else:
             return False
     except:
@@ -393,26 +407,48 @@ def keyword_map(new_line_name):
     return new_line_name.strip()
 
 
-def check_priority(keyword,exlusion_list,priority_list):
+def check_mandory_list(original_line_name,keyword_list,mandatory_list):
+    mandatory_match_list = []
+    mandatory_validity_status = False
+    for word in mandatory_list:
+        word = str(word).lower()
+        if(word in original_line_name):
+            mandatory_validity_status = True
+            if(len(keyword_list) >= 2):
+                mandatory_match_list.append(word)
+    if(mandatory_validity_status == True and len(mandatory_match_list) >= 1):
+        return True
+    elif(mandatory_validity_status == True and len(mandatory_match_list) == 0):
+        return False
+    else:     
+        return True
+
+def check_priority(keyword,exlusion_list,original_line_name,mandatory_list):
     new_exlusion_list = str(exlusion_list).lower().split("|")
     keyword_list = str(keyword).lower().split(',')
-    if(len(keyword_list) == 1):
-        if(len(keyword_list[0]) >= 3):
-            if(keyword in new_exlusion_list or len(keyword) <= 2):
+    mandatory_list = str(mandatory_list).split("|")
+    original_line_name = str(original_line_name).lower()
+    mandatory_status = check_mandory_list(original_line_name,keyword_list,mandatory_list)
+    if(mandatory_status == True):
+        if(len(keyword_list) == 1):
+            if(len(keyword_list[0]) >= 3):
+                if(keyword in new_exlusion_list or len(keyword) <= 2):
+                    return False
+                else:
+                    return True
+            else:
+                return False
+        else:
+            exclusion_count = 0
+            for word in keyword_list:
+                if(word in new_exlusion_list):
+                    exclusion_count += 1
+            if(len(keyword_list) == exclusion_count):
                 return False
             else:
                 return True
-        else:
-            return False
     else:
-        exclusion_count = 0
-        for word in keyword_list:
-            if(word in new_exlusion_list):
-                exclusion_count += 1
-        if(len(keyword_list) == exclusion_count):
-            return False
-        else:
-            return True
+        return False
         
 def decode_match_keyword(response):
     match_keyword = []
@@ -442,39 +478,58 @@ def decode_match_keyword(response):
         match_keyword = ",".join(match_keyword)
     else:
         match_keyword = ""
-    return match_keyword
+    return match_keyword.strip()
 
 
 def search_here(traffic,track,traffic_data=[]):
+    match_word_list = []
     response = CheckLineName(traffic['New_Line_Name'],track['Placement_Name']).find_match()
     if(response['status'] == True and response['match_count'] == 1):
+        match_word_list.append(decode_match_keyword(response))
         re_response = re_search(traffic['New_Line_Name'],track['Placement_Name'])
-        if(re_response != False and re_response['status'] == True):
+        if(re_response != False and re_response['status'] == True and decode_match_keyword(re_response) not in match_word_list):
+            match_word_list.append(decode_match_keyword(re_response))
             response = re_response
+            response['match_count'] = len(match_word_list)
 
         if(int(response['match_count']) == 1 or response['status'] == False):
             re_response = check_with_original_line_name(traffic['Original_Line_Name'],track['Placement_Name'],traffic_data)
-            if(re_response != False and re_response['status'] == True):
+            if(re_response != False and re_response['status'] == True and decode_match_keyword(re_response) not in match_word_list):
+                match_word_list.append(decode_match_keyword(re_response))
                 response = re_response
+                response['match_count'] = len(match_word_list)
                 
         elif(int(response['match_count']) == 0):
             re_response = check_with_mapped_line_name(traffic['Mapped_Line_Name'],traffic['New_Line_Name'],track['Placement_Name'])
-            if(re_response != False and re_response['status'] == True):
+            if(re_response != False and re_response['status'] == True and decode_match_keyword(re_response) not in match_word_list):
+                match_word_list.append(decode_match_keyword(re_response))
                 response = re_response
+                response['match_count'] = len(match_word_list)
     elif(response['status'] == False):
         # print("Original Line Namr check")
         re_response = check_with_original_line_name(traffic['Original_Line_Name'],track['Placement_Name'],traffic_data)
-        if(re_response != False and re_response['status'] == True):
+        if(re_response != False and re_response['status'] == True and decode_match_keyword(re_response) not in match_word_list):
+            match_word_list.append(decode_match_keyword(re_response))
             response = re_response
+            response['match_count'] = len(match_word_list)
+
     if(response['status'] == False):
         re_response = re_three_search(traffic['New_Line_Name'],track['Placement_Name'])
-        if(re_response != False and re_response['status'] == True):
-                response = re_response
+        if(re_response != False and re_response['status'] == True and decode_match_keyword(re_response) not in match_word_list):
+            match_word_list.append(decode_match_keyword(re_response))
+            response = re_response
+            response['match_count'] = len(match_word_list)
     if(response['status'] == False):
             # print("check in Mapped Line Name")
             re_response = check_with_mapped_line_name(traffic['Mapped_Line_Name'],traffic['New_Line_Name'],track['Placement_Name'])
-            if(re_response != False and re_response.get('status',False) == True):
+            if(re_response != False and re_response.get('status',False) == True and decode_match_keyword(re_response) not in match_word_list):
+                match_word_list.append(decode_match_keyword(re_response))
                 response = re_response
+                response['match_count'] = len(match_word_list)
+    if(len(match_word_list) >= 1):
+        response['match_keyword'] = ",".join(match_word_list).strip()
+    else:
+        response['match_keyword'] = decode_match_keyword(response)
     return response
 
 
@@ -492,8 +547,8 @@ def get_ranked(write_data):
                 for data in sorted_list:
                     if(data['Algorithm'] == 'Mapped Line Name'):
                         priority_status = True
-                    else: 
-                        priority_status = check_priority(data['Match Keyword'],exlusion_list,priority_list)
+                    else:
+                        priority_status = check_priority(data['Match Keyword'],exlusion_list,data['Original Line Name'],mandatory_list)
                     if(priority_status):
                         if(data['Count'] == biggest_count):
                             data['Rank'] = 1
@@ -512,7 +567,7 @@ def get_ranked(write_data):
                     if(data['Algorithm'] == 'Mapped Line Name'):
                         priority_status = True
                     else: 
-                        priority_status = check_priority(data['Match Keyword'],exlusion_list,priority_list)
+                        priority_status = check_priority(data['Match Keyword'],exlusion_list,data['Original Line Name'],mandatory_list)
                     if(priority_status):
                         if(data['Count'] == biggest_count):
                             line_name_split_status = split_line_name(data['Line Name'])
