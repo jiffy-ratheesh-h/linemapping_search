@@ -2,6 +2,12 @@ from jiffy_search import CheckLineName, SearchAlgorithms
 import json
 from operator import itemgetter
 
+def unique_list(list_items):
+    unique_list = []
+    for x in list_items:
+        if x not in unique_list:
+            unique_list.append(x)
+    return unique_list
 
 def make_response(status,algorithm,keyword,target,match_count=0,word_match=None):
     return {
@@ -201,21 +207,6 @@ def check_with_mapped_line_name(mapped_line_name,new_line_name,new_placement_nam
                     # print("Status True")
                     response = CheckLineName(linename,new_placement_name).find_match()
                     # print(response)
-                    if(response['status'] == True and response['match_count'] == 1):
-                        mapped_match_count += 1
-                        re_response = re_search(new_line_name,new_placement_name)
-                        if(re_response != False and re_response.get('status',False) == True):
-                            match_words = {
-                                'Keyword':re_response['keyword'],
-                                'Target':re_response['Target']
-                            }
-                            mapped_match_words.append(match_words)
-                        else:
-                            match_words = {
-                                'Keyword':response['keyword'],
-                                'Target':response['target']
-                            }
-                            mapped_match_words.append(match_words)
             if(len(mapped_match_words) >=1):
                 return make_response(True,'Mapped Line Name',mapped_line_name,new_placement_name,len(mapped_match_words),mapped_match_words)
             else:
@@ -233,30 +224,33 @@ def check_with_mapped_line_name(mapped_line_name,new_line_name,new_placement_nam
                 process_status = True
             if(process_status == True):
                 response = CheckLineName(mapped_line_name,new_placement_name).find_match()
-                if(response['status'] == True and response['match_count'] == 1):
-                    re_response = re_search(new_line_name,new_placement_name)
-                    if(re_response != False and re_response.get('status',False) == True):
-                        response = re_response
-                        return re_response
-                    else:
-                        return response
-                else:
-                    return response
+                return response
             else:
                 return make_response(False,'Mapped Line Name',mapped_line_name,new_placement_name,0)
     except Exception as e:
         raise Exception(str(e))
     
 
+def check_list_is_same_or_not(date_list):
+    current_date = date_list[0]
+    count = date_list.count(current_date)
+    if(count == len(date_list)):
+        return True
+    else:
+        return False
     
 def get_longest_word_from_list(test_list):
     res = ""
-    max_len = -1
-    for ele in test_list:
-        if len(ele) > max_len:
-            max_len = len(ele)
-            res = ele
-    return res
+    len_list = [len(itm) for itm in test_list]
+    if(check_list_is_same_or_not(len_list)):
+        return test_list
+    else:
+        max_len = -1
+        for ele in test_list:
+            if len(ele) > max_len:
+                max_len = len(ele)
+                res = ele
+        return [res]
 
 def split_line_name(line_name):
     line_name_split = line_name.split()
@@ -475,61 +469,79 @@ def decode_match_keyword(response):
                 split_target = wordMatch['Target'].split(" ")
                 match_keyword.append(", ".join(split_target))
     if(len(match_keyword) >= 1):
-        match_keyword = ",".join(match_keyword)
+        new_match_keyword = []
+        for itm in match_keyword:
+            if("," in itm):
+                new_itm = itm.split(",")
+                new_itm = [str(item).strip().lower() for item in new_itm]
+                new_match_keyword.extend(new_itm)
+            else:
+                new_match_keyword.append(itm) 
+        match_keyword = unique_list(new_match_keyword)
+        return match_keyword
     else:
-        match_keyword = ""
-    return match_keyword.strip()
+        match_keyword = []
+    return match_keyword
 
+def check_exists_on_match_word_list(response,match_word_list):
+    response_list = decode_match_keyword(response)
+    for itm in response_list:
+        if(itm in match_word_list):
+            return False
+    return True
 
 def search_here(traffic,track,traffic_data=[]):
     match_word_list = []
     response = CheckLineName(traffic['New_Line_Name'],track['Placement_Name']).find_match()
-    if(response['status'] == True and response['match_count'] == 1):
-        match_word_list.append(decode_match_keyword(response))
+    if(response['status'] == True and response['match_count'] >=2):
+        match_word_list.extend(decode_match_keyword(response))
+        response['match_count'] = len(match_word_list)
+    if(response['status'] == True and response['match_count'] == 1 and response['algorithm'] != "Exact Match"):
+        match_word_list.extend(decode_match_keyword(response))
         re_response = re_search(traffic['New_Line_Name'],track['Placement_Name'])
-        if(re_response != False and re_response['status'] == True and decode_match_keyword(re_response) not in match_word_list):
-            match_word_list.append(decode_match_keyword(re_response))
+        if(re_response != False and re_response['status'] == True and check_exists_on_match_word_list(re_response,match_word_list)):
+            match_word_list.extend(decode_match_keyword(re_response))
             response = re_response
             response['match_count'] = len(match_word_list)
 
         if(int(response['match_count']) == 1 or response['status'] == False):
             re_response = check_with_original_line_name(traffic['Original_Line_Name'],track['Placement_Name'],traffic_data)
-            if(re_response != False and re_response['status'] == True and decode_match_keyword(re_response) not in match_word_list):
-                match_word_list.append(decode_match_keyword(re_response))
+            if(re_response != False and re_response['status'] == True and check_exists_on_match_word_list(re_response,match_word_list)):
+                match_word_list.extend(decode_match_keyword(re_response))
                 response = re_response
                 response['match_count'] = len(match_word_list)
                 
         elif(int(response['match_count']) == 0):
             re_response = check_with_mapped_line_name(traffic['Mapped_Line_Name'],traffic['New_Line_Name'],track['Placement_Name'])
-            if(re_response != False and re_response['status'] == True and decode_match_keyword(re_response) not in match_word_list):
-                match_word_list.append(decode_match_keyword(re_response))
+            if(re_response != False and re_response['status'] == True and check_exists_on_match_word_list(re_response,match_word_list)):
+                match_word_list.extend(decode_match_keyword(re_response))
                 response = re_response
                 response['match_count'] = len(match_word_list)
     elif(response['status'] == False):
         # print("Original Line Namr check")
         re_response = check_with_original_line_name(traffic['Original_Line_Name'],track['Placement_Name'],traffic_data)
-        if(re_response != False and re_response['status'] == True and decode_match_keyword(re_response) not in match_word_list):
-            match_word_list.append(decode_match_keyword(re_response))
+        if(re_response != False and re_response['status'] == True and check_exists_on_match_word_list(re_response,match_word_list)):
+            match_word_list.extend(decode_match_keyword(re_response))
             response = re_response
             response['match_count'] = len(match_word_list)
 
     if(response['status'] == False):
         re_response = re_three_search(traffic['New_Line_Name'],track['Placement_Name'])
-        if(re_response != False and re_response['status'] == True and decode_match_keyword(re_response) not in match_word_list):
-            match_word_list.append(decode_match_keyword(re_response))
+        if(re_response != False and re_response['status'] == True and check_exists_on_match_word_list(re_response,match_word_list)):
+            match_word_list.extend(decode_match_keyword(re_response))
             response = re_response
             response['match_count'] = len(match_word_list)
-    if(response['status'] == False):
-            # print("check in Mapped Line Name")
-            re_response = check_with_mapped_line_name(traffic['Mapped_Line_Name'],traffic['New_Line_Name'],track['Placement_Name'])
-            if(re_response != False and re_response.get('status',False) == True and decode_match_keyword(re_response) not in match_word_list):
-                match_word_list.append(decode_match_keyword(re_response))
-                response = re_response
-                response['match_count'] = len(match_word_list)
+    # print("check in Mapped Line Name")
+    re_response = check_with_mapped_line_name(traffic['Mapped_Line_Name'],traffic['New_Line_Name'],track['Placement_Name'])
+    if(re_response != False and re_response.get('status',False) == True and check_exists_on_match_word_list(re_response,match_word_list)):
+        match_word_list.extend(decode_match_keyword(re_response))
+        response = re_response
+        response['match_count'] = len(match_word_list)
     if(len(match_word_list) >= 1):
-        response['match_keyword'] = ",".join(match_word_list).strip()
+        response['match_keyword'] = match_word_list
     else:
         response['match_keyword'] = decode_match_keyword(response)
+    response['match_keyword'] = ",".join(response['match_keyword']).strip()
     return response
 
 
@@ -557,9 +569,9 @@ def get_ranked(write_data):
                     else:
                         data['Rank'] = 0
         else:
-            new_filtered_write_data = list(filter(lambda d: int(d['Count']) >=1, filtered_write_data))
+            new_filtered_write_data = list(filter(lambda d: int(d['Count']) ==1, filtered_write_data))
             match_keyword_list = [item['Match Keyword'] for item in new_filtered_write_data]
-            longest_word = get_longest_word_from_list(match_keyword_list)
+            # longest_word = get_longest_word_from_list(match_keyword_list)
             if(len(new_filtered_write_data) >= 1):
                 sorted_list = sorted(new_filtered_write_data, key = itemgetter('Count'),reverse=True)
                 biggest_count = max([item['Count'] for item in sorted_list])
@@ -574,28 +586,149 @@ def get_ranked(write_data):
                             if(line_name_split_status):
                                 data['Rank'] = 1
                                 data['Status'] = True
-                            elif(data['Match Keyword'] == longest_word):
-                                    # For handling numeric data on matched keyword
-                                    match_status = True
-                                    m_split = data['Match Keyword'].split(",")
-                                    if(len(m_split) == 1):
-                                        for i in m_split:
-                                            if(i.isnumeric()):
-                                                match_status = False
-                                                break
-                                    if(match_status == True):
-                                        data['Rank'] = 1
-                                        data['Status'] = True
-                                        data['Longest Keyword'] = longest_word
-                                    else:
-                                        data['Rank'] = 0
-                                        data['Status'] = False
-                                        data['Longest Keyword'] = longest_word
+                            # elif(data['Match Keyword'] in longest_word):
+                            else:
+                                # For handling numeric data on matched keyword
+                                match_status = True
+                                m_split = data['Match Keyword'].split(",")
+                                if(len(m_split) == 1):
+                                    for i in m_split:
+                                        if(i.isnumeric()):
+                                            match_status = False
+                                            break
+                                if(match_status == True):
+                                    data['Rank'] = 1
+                                    data['Status'] = True
+                                    # data['Longest Keyword'] = longest_word
+                                else:
+                                    data['Rank'] = 0
+                                    data['Status'] = False
+                                    # data['Longest Keyword'] = longest_word
                         else:
                             data['Rank'] = 0
                             data['Status'] = False
-                            data['Longest Keyword'] = longest_word
+                            # data['Longest Keyword'] = longest_word
                     else:
                         data['Rank'] = 0
                         data['Status'] = False
+    return write_data
+
+def custom_remove_common_words(filter_line_name_data,column_name):
+    keyword = filter_line_name_data[0][column_name]
+    keyword = remove_spcl_characters(keyword).lower().split(" ")
+    if(len(keyword) >= 1):
+        for word in keyword:
+            count = 0
+            for line_name in filter_line_name_data:
+                if(word in str(line_name[column_name]).lower()):
+                    count += 1
+            if(count == len(filter_line_name_data)):
+                for itm in filter_line_name_data:
+                    itm[column_name] = remove_spcl_characters(itm[column_name]).lower().replace(word," ").replace("  "," ").strip()
+    return filter_line_name_data
+
+def custom_search_here(traffic,track,traffic_data,traffic_column,track_column):
+    match_word_list = []
+    response = CheckLineName(traffic[traffic_column],track[track_column]).find_match()
+    if(response['status'] == True and response['match_count'] == 1 and response['algorithm'] != "Exact Match"):
+        match_word_list.extend(decode_match_keyword(response))
+        re_response = re_search(traffic[traffic_column],track[track_column])
+        if(re_response != False and re_response['status'] == True and check_exists_on_match_word_list(re_response,match_word_list)):
+            match_word_list.extend(decode_match_keyword(re_response))
+            response = re_response
+            response['match_count'] = len(match_word_list)
+
+    elif(response['status'] == False):
+        # print("Original Line Namr check")
+        re_response = check_with_original_line_name(traffic[traffic_column],track[track_column],traffic_data)
+        if(re_response != False and re_response['status'] == True and check_exists_on_match_word_list(re_response,match_word_list)):
+            match_word_list.extend(decode_match_keyword(re_response))
+            response = re_response
+            response['match_count'] = len(match_word_list)
+
+    if(response['status'] == False):
+        re_response = re_three_search(traffic[traffic_column],track[track_column])
+        if(re_response != False and re_response['status'] == True and check_exists_on_match_word_list(re_response,match_word_list)):
+            match_word_list.extend(decode_match_keyword(re_response))
+            response = re_response
+            response['match_count'] = len(match_word_list)
+   
+    if(len(match_word_list) >= 1):
+        response['match_keyword'] = match_word_list
+    else:
+        response['match_keyword'] = decode_match_keyword(response)
+    response['match_keyword'] = ",".join(response['match_keyword']).strip()
+    return response
+
+
+def custom_check_present_status(write_data,payload,traffic_column,track_column):
+    for item in write_data:
+        if(item[traffic_column] == payload[traffic_column] and item[track_column] == payload[track_column]):
+            return True
+    return False
+
+
+def custom_get_ranked(write_data,traffic_column_name):
+    new_filtered_write_data = list(filter(lambda d: d['Status'] == True and d['Count'] >= 2, write_data))
+    if(len(new_filtered_write_data) >= 1):
+        if(len(new_filtered_write_data) == 1):
+            new_filtered_write_data[0]['Rank'] = 1
+        else:
+            sorted_list = sorted(new_filtered_write_data, key = itemgetter('Count'),reverse=True)
+            biggest_count = max([item['Count'] for item in sorted_list])
+            for data in sorted_list:
+                if(data['Algorithm'] == 'Mapped Line Name'):
+                    priority_status = True
+                else:
+                    priority_status = check_priority(data['Match Keyword'],exlusion_list,data[traffic_column_name],mandatory_list)
+                if(priority_status):
+                    if(data['Count'] == biggest_count):
+                        data['Rank'] = 1
+                    else:
+                        data['Rank'] = 0
+                else:
+                    data['Rank'] = 0
+    else:
+        new_filtered_write_data = list(filter(lambda d: int(d['Count']) >=1, write_data))
+        match_keyword_list = [item['Match Keyword'] for item in new_filtered_write_data]
+        # longest_word = get_longest_word_from_list(match_keyword_list)
+        if(len(new_filtered_write_data) >= 1):
+            sorted_list = sorted(new_filtered_write_data, key = itemgetter('Count'),reverse=True)
+            biggest_count = max([item['Count'] for item in sorted_list])
+            for data in sorted_list:
+                if(data['Algorithm'] == 'Mapped Line Name'):
+                    priority_status = True
+                else: 
+                    priority_status = check_priority(data['Match Keyword'],exlusion_list,data[traffic_column_name],mandatory_list)
+                if(priority_status):
+                    if(data['Count'] == biggest_count):
+                        line_name_split_status = split_line_name(data[traffic_column_name])
+                        if(line_name_split_status):
+                            data['Rank'] = 1
+                            data['Status'] = True
+                        # elif(data['Match Keyword'] in longest_word):
+                        else:
+                                # For handling numeric data on matched keyword
+                                match_status = True
+                                m_split = data['Match Keyword'].split(",")
+                                if(len(m_split) == 1):
+                                    for i in m_split:
+                                        if(i.isnumeric()):
+                                            match_status = True
+                                            break
+                                if(match_status == True):
+                                    data['Rank'] = 1
+                                    data['Status'] = True
+                                    # data['Longest Keyword'] = longest_word
+                                else:
+                                    data['Rank'] = 0
+                                    data['Status'] = False
+                                    # data['Longest Keyword'] = longest_word
+                    else:
+                        data['Rank'] = 0
+                        data['Status'] = False
+                        # data['Longest Keyword'] = longest_word
+                else:
+                    data['Rank'] = 0
+                    data['Status'] = False
     return write_data

@@ -10,7 +10,6 @@ def line_name_search(traffic,track_data,traffic_data):
     for track in track_data:
         response = search_here(traffic,track,traffic_data)
         match_keyword = response['match_keyword'].strip()
-        print(match_keyword)
         if(response['word_match'] is None):
             response['word_match'] = ""
         payload = {
@@ -46,9 +45,14 @@ def check_line_name(traffic,track):
 
 def rank_based_filter(write_data):
     new_response_track = []
-    new_filtered_write_data = list(filter(lambda d: int(d['Rank']) == 1 and d['Status'] == True, write_data))
-    for item in new_filtered_write_data:
-        new_response_track.append(item['Track'])
+    exact_match_filter = list(filter(lambda d: str(d['Algorithm']) == 'Exact Match' and d['Status'] == True, write_data))
+    if(len(exact_match_filter) == 0):
+        new_filtered_write_data = list(filter(lambda d: int(d['Rank']) == 1 and d['Status'] == True, write_data))
+        for item in new_filtered_write_data:
+            new_response_track.append(item['Track'])
+    else:
+        for item in exact_match_filter:
+            new_response_track.append(item['Track'])
     return new_response_track
 
 
@@ -73,3 +77,31 @@ def  write_excel_data(response,file_path,traffic):
                 df2.to_excel(writer, sheet_name=str(traffic['Operative_ID']))
     except:
         pass
+
+
+def custom_line_name_search(traffic,track_data,traffic_data,traffic_column,track_column):
+    write_data = []
+    track_data = custom_remove_common_words(track_data,track_column)
+    for track in track_data:
+        response = custom_search_here(traffic,track,traffic_data,traffic_column,track_column)
+        match_keyword = response['match_keyword'].strip()
+        if(response['word_match'] is None):
+            response['word_match'] = ""
+        payload = {
+            'Status':response['status'],
+            traffic_column:traffic[traffic_column],
+            track_column:track[track_column],
+            'Algorithm':response['algorithm'],
+            'Count':response['match_count'],
+            'Info':response['word_match'],
+            'Rank':0,
+            'Match Keyword':match_keyword,
+            'Longest Keyword' : "",
+            'Track':track
+        }
+        present_status = custom_check_present_status(write_data,payload,traffic_column,track_column)
+        if(present_status == False):
+            write_data.append(payload)
+    new_write_data = custom_get_ranked(write_data,traffic_column)
+    # print(new_write_data)
+    return new_write_data
