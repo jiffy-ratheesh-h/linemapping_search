@@ -37,14 +37,15 @@ class CreatitveNameSearch:
 
 
 class CustomLineNameFilter:
-    def __init__(self,traffic:dict,track_data:list,traffic_data:list,track_column:str, trafic_column:str):
+    def __init__(self,traffic:dict,track_data:list,traffic_data:list,track_column:str, trafic_column:str,recheck:bool=False):
      self.traffic = traffic
      self.track_data = track_data
      self.traffic_data = traffic_data
      self.track_column = track_column
      self.trafic_column = trafic_column
+     self.recheck = recheck
     
     def filter_matched(self):
-       response = custom_line_name_search(self.traffic,self.track_data,self.traffic_data,self.trafic_column,self.track_column)
+       response = custom_line_name_search(self.traffic,self.track_data,self.traffic_data,self.trafic_column,self.track_column,self.recheck)
        final_response = rank_based_filter(response)
        return final_response

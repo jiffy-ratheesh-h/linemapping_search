@@ -79,9 +79,10 @@ def  write_excel_data(response,file_path,traffic):
         pass
 
 
-def custom_line_name_search(traffic,track_data,traffic_data,traffic_column,track_column):
+def custom_line_name_search(traffic,track_data,traffic_data,traffic_column,track_column,recheck):
     write_data = []
-    track_data = custom_remove_common_words(track_data,track_column)
+    if(recheck == False):
+        track_data = custom_remove_common_words(track_data,track_column)
     for track in track_data:
         response = custom_search_here(traffic,track,traffic_data,traffic_column,track_column)
         match_keyword = response['match_keyword'].strip()
