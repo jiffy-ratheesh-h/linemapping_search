@@ -193,7 +193,7 @@ def check_with_mapped_line_name(mapped_line_name,new_line_name,new_placement_nam
             mapped_match_count = 0
             mapped_match_words = []
             for linename in mapped_line_name:
-                # print(linename)
+                print(linename)
                 process_status = False
                 line_name_split = linename.split(" ")
                 if(len(line_name_split) >= 2):
@@ -204,8 +204,11 @@ def check_with_mapped_line_name(mapped_line_name,new_line_name,new_placement_nam
                 else:
                     process_status = True
                 if(process_status == True):
-                    # print("Status True")
+                    # print("process_status True")
                     response = CheckLineName(linename,new_placement_name).find_match()
+                    if(response['status'] == True):
+                        print(response)
+                        mapped_match_words.extend(response['word_match'])
                     # print(response)
             if(len(mapped_match_words) >=1):
                 return make_response(True,'Mapped Line Name',mapped_line_name,new_placement_name,len(mapped_match_words),mapped_match_words)
@@ -448,6 +451,7 @@ def decode_match_keyword(response):
     match_keyword = []
     if(response['word_match'] is not None):
         for wordMatch in response['word_match']:
+            print("wordMatch",wordMatch)
             if(type(wordMatch['Target']) is list and type(wordMatch['Keyword']) is list):
                 if(len(wordMatch['Target']) > len(wordMatch['Keyword'])):
                     match_keyword.append(", ".join(wordMatch['Keyword']))
