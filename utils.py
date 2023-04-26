@@ -1,17 +1,22 @@
 from jiffy_search import CheckLineName, SearchAlgorithms
 from ._helper import *
 from datetime import datetime
-import csv
+import copy
 import os
 import pandas as pd
 
 def line_name_search(traffic,track_data,traffic_data):
     write_data = []
+    track_data_copy = copy.deepcopy(track_data)
     for track in track_data:
         response = search_here(traffic,track,traffic_data)
         match_keyword = response['match_keyword'].strip()
         if(response['word_match'] is None):
             response['word_match'] = ""
+        track_obj = {}
+        for i in track_data_copy:
+            if(track['UUID'] == i['UUID']):
+                track_obj = i
         payload = {
             'Status':response['status'],
             'Original Line Name':traffic['Original_Line_Name'],
@@ -81,9 +86,15 @@ def  write_excel_data(response,file_path,traffic):
 
 def custom_line_name_search(traffic,track_data,traffic_data,traffic_column,track_column,recheck):
     write_data = []
+    track_data_copy = copy.deepcopy(track_data)
     if(recheck == False):
         track_data = custom_remove_common_words(track_data,track_column)
     for track in track_data:
+        track_obj = {}
+        for i in track_data_copy:
+            if(track['UUID'] == i['UUID']):
+                track_obj = i
+
         response = custom_search_here(traffic,track,traffic_data,traffic_column,track_column)
         match_keyword = response['match_keyword'].strip()
         if(response['word_match'] is None):
@@ -98,7 +109,7 @@ def custom_line_name_search(traffic,track_data,traffic_data,traffic_column,track
             'Rank':0,
             'Match Keyword':match_keyword,
             'Longest Keyword' : "",
-            'Track':track
+            'Track':track_obj
         }
         present_status = custom_check_present_status(write_data,payload,traffic_column,track_column)
         if(present_status == False):
