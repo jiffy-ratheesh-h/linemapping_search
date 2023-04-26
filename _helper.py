@@ -451,7 +451,6 @@ def decode_match_keyword(response):
     match_keyword = []
     if(response['word_match'] is not None):
         for wordMatch in response['word_match']:
-            print("wordMatch",wordMatch)
             if(type(wordMatch['Target']) is list and type(wordMatch['Keyword']) is list):
                 if(len(wordMatch['Target']) > len(wordMatch['Keyword'])):
                     match_keyword.append(", ".join(wordMatch['Keyword']))
