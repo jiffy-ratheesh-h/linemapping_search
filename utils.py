@@ -89,9 +89,9 @@ def custom_line_name_search(traffic,track_data,traffic_data,traffic_column,track
     track_data_copy = copy.deepcopy(track_data)
     if(recheck == False):
         track_data = custom_remove_common_words(track_data,track_column)
-    for track in track_data:
+    for track in track_data_copy:
         track_obj = {}
-        for i in track_data_copy:
+        for i in track_data:
             if(track['UUID'] == i['UUID']):
                 track_obj = i
 
