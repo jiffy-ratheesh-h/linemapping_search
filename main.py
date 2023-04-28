@@ -20,6 +20,10 @@ class LineNameFilter:
             resp_mapped = CustomLineNameFilter(self.traffic, final_response, [], 'Placement_Name', 'Mapped_Line_Name').filter_matched()
             if (len(resp_mapped) >= 1):
                 return unique_list(resp_mapped)
+        elif(self.traffic['Mapped_Line_Name'] != self.traffic['New_Line_Name']):
+            resp_mapped = CustomLineNameFilter(self.traffic, self.track_data, [], 'Placement_Name', 'Mapped_Line_Name').filter_matched()
+            if (len(resp_mapped) >= 1):
+                return unique_list(resp_mapped)
         return unique_list(final_response)
 
 
