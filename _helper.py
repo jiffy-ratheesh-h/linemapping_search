@@ -534,12 +534,12 @@ def search_here(traffic,track,traffic_data=[]):
             match_word_list.extend(decode_match_keyword(re_response))
             response = re_response
             response['match_count'] = len(match_word_list)
-    # print("check in Mapped Line Name")
-    re_response = check_with_mapped_line_name(traffic['Mapped_Line_Name'],traffic['New_Line_Name'],track['Placement_Name'])
-    if(re_response != False and re_response.get('status',False) == True and check_exists_on_match_word_list(re_response,match_word_list)):
-        match_word_list.extend(decode_match_keyword(re_response))
-        response = re_response
-        response['match_count'] = len(match_word_list)
+
+    # re_response = check_with_mapped_line_name(traffic['Mapped_Line_Name'],traffic['New_Line_Name'],track['Placement_Name'])
+    # if(re_response != False and re_response.get('status',False) == True and check_exists_on_match_word_list(re_response,match_word_list)):
+    #     match_word_list.extend(decode_match_keyword(re_response))
+    #     response = re_response
+    #     response['match_count'] = len(match_word_list)
     if(len(match_word_list) >= 1):
         response['match_keyword'] = match_word_list
     else:

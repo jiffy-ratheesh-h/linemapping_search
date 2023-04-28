@@ -94,7 +94,6 @@ def custom_line_name_search(traffic,track_data,traffic_data,traffic_column,track
         for i in track_data:
             if(track['UUID'] == i['UUID']):
                 track_obj = i
-                print(track_obj)
 
         response = custom_search_here(traffic,track,traffic_data,traffic_column,track_column)
         match_keyword = response['match_keyword'].strip()
