@@ -67,6 +67,7 @@ exlusion_list = "a VCBS|EyeQ|OCR|Adults|Video|Standard|640|480|PMNT|Local|Entert
 priority_list = "city|"
 mandatory_list = "anniversary|campus"
 delimetter = ["`",'~','|','@','#','$','%','&','^','*','(',')','_','-',' ',',','-'," "]
+unavoidable_list = "ct|"
 
 def clean_line_name(x,original_line_name):
     removed_count = 0
@@ -434,6 +435,8 @@ def check_priority(keyword,exlusion_list,original_line_name,mandatory_list):
                 else:
                     return True
             else:
+                if(keyword in unavoidable_list.split("|")):
+                    return True
                 return False
         else:
             exclusion_count = 0
