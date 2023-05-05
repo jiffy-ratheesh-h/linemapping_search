@@ -2,6 +2,12 @@ from jiffy_search import CheckLineName, SearchAlgorithms
 import json
 from operator import itemgetter
 
+exlusion_list = "a VCBS|EyeQ|OCR|Adults|Video|Standard|640|480|PMNT|Local|Entertainment|VCBS|pls|note|dart|dates|please|dark|Plus|News|Exclusion|dma|vantage|25-54|18-54|:15|15s|:30|30s|:60|:60s|15|30|60|san|CDSM|CDHC|ch22|sports|can|desktop|mobile|ott|City|Falls|Desk|Mob|zips|Zips|Skip|Non|is|or|an|am|iam|auto|bay"
+priority_list = "city|"
+mandatory_list = "anniversary|campus"
+delimetter = ["`",'~','|','@','#','$','%','&','^','*','(',')','_','-',' ',',','-'," "]
+unavoidable_list = "ct|wk"
+
 def unique_list(list_items):
     unique_list = []
     for x in list_items:
@@ -63,11 +69,6 @@ def unique_list(list_items):
             unique_list.append(x)
     return unique_list
 
-exlusion_list = "a VCBS|EyeQ|OCR|Adults|Video|Standard|640|480|PMNT|Local|Entertainment|VCBS|pls|note|dart|dates|please|dark|Plus|News|Exclusion|dma|vantage|25-54|18-54|:15|15s|:30|30s|:60|:60s|15|30|60|san|CDSM|CDHC|ch22|sports|can|desktop|mobile|ott|City|Falls|Desk|Mob|zips|Zips|Skip|Non|is|or|an|am|iam|auto|bay"
-priority_list = "city|"
-mandatory_list = "anniversary|campus"
-delimetter = ["`",'~','|','@','#','$','%','&','^','*','(',')','_','-',' ',',','-'," "]
-unavoidable_list = "ct|"
 
 def clean_line_name(x,original_line_name):
     removed_count = 0
@@ -538,11 +539,13 @@ def search_here(traffic,track,traffic_data=[]):
             response = re_response
             response['match_count'] = len(match_word_list)
 
-    # re_response = check_with_mapped_line_name(traffic['Mapped_Line_Name'],traffic['New_Line_Name'],track['Placement_Name'])
-    # if(re_response != False and re_response.get('status',False) == True and check_exists_on_match_word_list(re_response,match_word_list)):
-    #     match_word_list.extend(decode_match_keyword(re_response))
-    #     response = re_response
-    #     response['match_count'] = len(match_word_list)
+    if(response['status'] == False):
+        re_response = check_with_mapped_line_name(traffic['Mapped_Line_Name'],traffic['New_Line_Name'],track['Placement_Name'])
+        print(re_response)
+        if(re_response != False and re_response.get('status',False) == True and check_exists_on_match_word_list(re_response,match_word_list)):
+            match_word_list.extend(decode_match_keyword(re_response))
+            response = re_response
+            response['match_count'] = len(match_word_list)
     if(len(match_word_list) >= 1):
         response['match_keyword'] = match_word_list
     else:
