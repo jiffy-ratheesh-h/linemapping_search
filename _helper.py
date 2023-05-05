@@ -1,6 +1,20 @@
 from jiffy_search import CheckLineName, SearchAlgorithms
 import json
 from operator import itemgetter
+import os
+
+# config_path = r"Y:\Configurations\Line_Name_configs"
+# line_mapping_config_file = os.path.join(config_path,'Line_Name_Mapping_Configurations.json')
+# f = (line_mapping_config_file,'r') 
+# config_list =json.load(f)
+# unavoidable_list_data = []
+# for itm in config_list:
+#     if("|" not in itm['Name']):
+#         unavoidable_list_data.append(itm['Name'])
+#     else:
+#         itm_list = str(itm).split("|")
+#         unavoidable_list_data.extend(itm_list)
+# unavoidable_list = "|".join(unavoidable_list_data)
 
 exlusion_list = "a VCBS|EyeQ|OCR|Adults|Video|Standard|640|480|PMNT|Local|Entertainment|VCBS|pls|note|dart|dates|please|dark|Plus|News|Exclusion|dma|vantage|25-54|18-54|:15|15s|:30|30s|:60|:60s|15|30|60|san|CDSM|CDHC|ch22|sports|can|desktop|mobile|ott|City|Falls|Desk|Mob|zips|Zips|Skip|Non|is|or|an|am|iam|auto|bay"
 priority_list = "city|"
