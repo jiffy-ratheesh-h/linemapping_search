@@ -643,11 +643,15 @@ def custom_remove_common_words(filter_line_name_data,column_name):
         for word in keyword:
             count = 0
             for line_name in filter_line_name_data:
+                line_name['BackupLineName'] = line_name[column_name]
                 if(word in str(line_name[column_name]).lower()):
                     count += 1
             if(count == len(filter_line_name_data)):
                 for itm in filter_line_name_data:
                     itm[column_name] = remove_spcl_characters(itm[column_name]).lower().replace(word," ").replace("  "," ").strip()
+                    if(itm[column_name] == ""):
+                        itm[column_name] = itm['BackupLineName']
+                        del itm['BackupLineName']
     return filter_line_name_data
 
 def custom_search_here(traffic,track,traffic_data,traffic_column,track_column):
@@ -686,7 +690,7 @@ def custom_search_here(traffic,track,traffic_data,traffic_column,track_column):
 
 def custom_check_present_status(write_data,payload,traffic_column,track_column):
     for item in write_data:
-        if(item[traffic_column] == payload[traffic_column] and item[track_column] == payload[track_column]):
+        if(item[traffic_column] == payload[traffic_column] and item[track_column] == payload[track_column] and payload['UUID'] == item['UUID']):
             return True
     return False
 
