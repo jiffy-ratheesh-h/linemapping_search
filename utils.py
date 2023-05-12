@@ -96,6 +96,7 @@ def custom_line_name_search(traffic,track_data,traffic_data,traffic_column,track
                 track_obj = i
 
         response = custom_search_here(traffic,track,traffic_data,traffic_column,track_column)
+        print(traffic[traffic_column],"  X  ",track[track_column])
         print(response)
         match_keyword = response['match_keyword'].strip()
         if(response['word_match'] is None):
