@@ -649,7 +649,8 @@ def custom_remove_common_words(filter_line_name_data,column_name):
             if(count == len(filter_line_name_data)):
                 for itm in filter_line_name_data:
                     itm[column_name] = remove_spcl_characters(itm[column_name]).lower().replace(word," ").replace("  "," ").strip()
-                    if(itm[column_name] == "" or len(itm[column_name]) == 1 or itm[column_name].isnumeric()):
+                    replace_space = itm[column_name].replace(" ","")
+                    if(itm[column_name] == "" or len(itm[column_name]) == 1 or itm[column_name].isnumeric() or len(replace_space) == 1 or replace_space.isnumeric()):
                         itm[column_name] = itm['BackupLineName']
                         del itm['BackupLineName']
     return filter_line_name_data
