@@ -2,6 +2,7 @@ from jiffy_search import CheckLineName, SearchAlgorithms
 from ._helper import *
 from datetime import datetime
 import copy
+import sys
 import os
 import pandas as pd
 
@@ -86,37 +87,46 @@ def  write_excel_data(response,file_path,traffic):
 
 def custom_line_name_search(traffic,track_data,traffic_data,traffic_column,track_column,recheck):
     write_data = []
-    track_data_copy = copy.deepcopy(track_data)
-    if(recheck == False):
-        track_data_copy = custom_remove_common_words(track_data_copy,track_column)
-    for track in track_data_copy:
-        track_obj = {}
-        for i in track_data:
-            if(track['UUID'] == i['UUID']):
-                track_obj = i
-
-        response = custom_search_here(traffic,track,traffic_data,traffic_column,track_column)
-        print(traffic[traffic_column],"  X  ",track[track_column])
-        print(response)
-        match_keyword = response['match_keyword'].strip()
-        if(response['word_match'] is None):
-            response['word_match'] = ""
-        payload = {
-            'Status':response['status'],
-            traffic_column:traffic[traffic_column],
-            track_column:track[track_column],
-            'Algorithm':response['algorithm'],
-            'Count':response['match_count'],
-            'Info':response['word_match'],
-            'Rank':0,
-            'Match Keyword':match_keyword,
-            'Longest Keyword' : "",
-            'UUID':track_obj['UUID'],
-            'Track':track_obj
-        }
-        present_status = custom_check_present_status(write_data,payload,traffic_column,track_column)
-        if(present_status == False):
-            write_data.append(payload)
-    new_write_data = custom_get_ranked(write_data,traffic_column)
-    # print(new_write_data)
-    return new_write_data
+    try:
+        track_data_copy = copy.deepcopy(track_data)
+        if(recheck == False):
+            track_data_copy = custom_remove_common_words(track_data_copy,track_column)
+        for track in track_data_copy:
+            if(traffic[traffic_column] is not None and track[track_column] is not None):
+                track_obj = {}
+                for i in track_data:
+                    if(track['UUID'] == i['UUID']):
+                        track_obj = i
+                print(f"Moving on comparison part with {traffic[traffic_column]} XX {track[track_column]}")
+                response = custom_search_here(traffic,track,traffic_data,traffic_column,track_column)
+                print(traffic[traffic_column],"  X  ",track[track_column])
+                print(response)
+                match_keyword = response['match_keyword'].strip()
+                if(response['word_match'] is None):
+                    response['word_match'] = ""
+                payload = {
+                    'Status':response['status'],
+                    traffic_column:traffic[traffic_column],
+                    track_column:track[track_column],
+                    'Algorithm':response['algorithm'],
+                    'Count':response['match_count'],
+                    'Info':response['word_match'],
+                    'Rank':0,
+                    'Match Keyword':match_keyword,
+                    'Longest Keyword' : "",
+                    'UUID':track_obj['UUID'],
+                    'Track':track_obj
+                }
+                present_status = custom_check_present_status(write_data,payload,traffic_column,track_column)
+                if(present_status == False):
+                    write_data.append(payload)
+        new_write_data = custom_get_ranked(write_data,traffic_column)
+        # print(new_write_data)
+        return new_write_data
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        err_msg = "Error = {0} Line Number : {1} , Error Type = {2} File = {3}".format(str(e),exc_tb.tb_lineno,exc_type,fname)
+        print(err_msg)
+        print("Exception Occurred on custom Line Name Search",str(e))
+        return []

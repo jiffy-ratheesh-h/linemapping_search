@@ -697,66 +697,67 @@ def custom_check_present_status(write_data,payload,traffic_column,track_column):
 
 
 def custom_get_ranked(write_data,traffic_column_name):
-    new_filtered_write_data = list(filter(lambda d: d['Status'] == True and d['Count'] >= 2, write_data))
-    if(len(new_filtered_write_data) >= 1):
-        if(len(new_filtered_write_data) == 1):
-            new_filtered_write_data[0]['Rank'] = 1
-        else:
-            sorted_list = sorted(new_filtered_write_data, key = itemgetter('Count'),reverse=True)
-            biggest_count = max([item['Count'] for item in sorted_list])
-            for data in sorted_list:
-                if(data['Algorithm'] == 'Mapped Line Name'):
-                    priority_status = True
-                else:
-                    priority_status = check_priority(data['Match Keyword'],exlusion_list,data[traffic_column_name],mandatory_list)
-                if(priority_status):
-                    if(data['Count'] == biggest_count):
-                        data['Rank'] = 1
+    if(len(write_data) >= 1):
+        new_filtered_write_data = list(filter(lambda d: d['Status'] == True and d['Count'] >= 2, write_data))
+        if(len(new_filtered_write_data) >= 1):
+            if(len(new_filtered_write_data) == 1):
+                new_filtered_write_data[0]['Rank'] = 1
+            else:
+                sorted_list = sorted(new_filtered_write_data, key = itemgetter('Count'),reverse=True)
+                biggest_count = max([item['Count'] for item in sorted_list])
+                for data in sorted_list:
+                    if(data['Algorithm'] == 'Mapped Line Name'):
+                        priority_status = True
+                    else:
+                        priority_status = check_priority(data['Match Keyword'],exlusion_list,data[traffic_column_name],mandatory_list)
+                    if(priority_status):
+                        if(data['Count'] == biggest_count):
+                            data['Rank'] = 1
+                        else:
+                            data['Rank'] = 0
                     else:
                         data['Rank'] = 0
-                else:
-                    data['Rank'] = 0
-    else:
-        new_filtered_write_data = list(filter(lambda d: int(d['Count']) >=1, write_data))
-        match_keyword_list = [item['Match Keyword'] for item in new_filtered_write_data]
-        # longest_word = get_longest_word_from_list(match_keyword_list)
-        if(len(new_filtered_write_data) >= 1):
-            sorted_list = sorted(new_filtered_write_data, key = itemgetter('Count'),reverse=True)
-            biggest_count = max([item['Count'] for item in sorted_list])
-            for data in sorted_list:
-                if(data['Algorithm'] == 'Mapped Line Name'):
-                    priority_status = True
-                else: 
-                    priority_status = check_priority(data['Match Keyword'],exlusion_list,data[traffic_column_name],mandatory_list)
-                if(priority_status):
-                    if(data['Count'] == biggest_count):
-                        line_name_split_status = split_line_name(data[traffic_column_name])
-                        if(line_name_split_status):
-                            data['Rank'] = 1
-                            data['Status'] = True
-                        # elif(data['Match Keyword'] in longest_word):
+        else:
+            new_filtered_write_data = list(filter(lambda d: int(d['Count']) >=1, write_data))
+            match_keyword_list = [item['Match Keyword'] for item in new_filtered_write_data]
+            # longest_word = get_longest_word_from_list(match_keyword_list)
+            if(len(new_filtered_write_data) >= 1):
+                sorted_list = sorted(new_filtered_write_data, key = itemgetter('Count'),reverse=True)
+                biggest_count = max([item['Count'] for item in sorted_list])
+                for data in sorted_list:
+                    if(data['Algorithm'] == 'Mapped Line Name'):
+                        priority_status = True
+                    else: 
+                        priority_status = check_priority(data['Match Keyword'],exlusion_list,data[traffic_column_name],mandatory_list)
+                    if(priority_status):
+                        if(data['Count'] == biggest_count):
+                            line_name_split_status = split_line_name(data[traffic_column_name])
+                            if(line_name_split_status):
+                                data['Rank'] = 1
+                                data['Status'] = True
+                            # elif(data['Match Keyword'] in longest_word):
+                            else:
+                                    # For handling numeric data on matched keyword
+                                    match_status = True
+                                    m_split = data['Match Keyword'].split(",")
+                                    if(len(m_split) == 1):
+                                        for i in m_split:
+                                            if(i.isnumeric()):
+                                                match_status = True
+                                                break
+                                    if(match_status == True):
+                                        data['Rank'] = 1
+                                        data['Status'] = True
+                                        # data['Longest Keyword'] = longest_word
+                                    else:
+                                        data['Rank'] = 0
+                                        data['Status'] = False
+                                        # data['Longest Keyword'] = longest_word
                         else:
-                                # For handling numeric data on matched keyword
-                                match_status = True
-                                m_split = data['Match Keyword'].split(",")
-                                if(len(m_split) == 1):
-                                    for i in m_split:
-                                        if(i.isnumeric()):
-                                            match_status = True
-                                            break
-                                if(match_status == True):
-                                    data['Rank'] = 1
-                                    data['Status'] = True
-                                    # data['Longest Keyword'] = longest_word
-                                else:
-                                    data['Rank'] = 0
-                                    data['Status'] = False
-                                    # data['Longest Keyword'] = longest_word
+                            data['Rank'] = 0
+                            data['Status'] = False
+                            # data['Longest Keyword'] = longest_word
                     else:
                         data['Rank'] = 0
                         data['Status'] = False
-                        # data['Longest Keyword'] = longest_word
-                else:
-                    data['Rank'] = 0
-                    data['Status'] = False
     return write_data
