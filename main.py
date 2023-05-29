@@ -10,10 +10,8 @@ class LineNameFilter:
         self.master_uuid = master_uuid
 
     def filter_matched(self):
-        response = line_name_search(
-            self.traffic, self.track_data, self.traffic_data)
-        file_path = os.path.join(
-            self.case_path, self.master_uuid + "_linename_search_response.xlsx")
+        response = line_name_search(self.traffic, self.track_data, self.traffic_data)
+        file_path = os.path.join(self.case_path, self.master_uuid + "_linename_search_response.xlsx")
         write_excel_data(response, file_path, self.traffic)
         final_response = rank_based_filter(response)
         if (len(final_response) >= 1 and self.traffic['Mapped_Line_Name'] != self.traffic['New_Line_Name']):

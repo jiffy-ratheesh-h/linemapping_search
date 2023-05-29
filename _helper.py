@@ -139,7 +139,7 @@ def clean_placement_name(filter_placement_data):
 
 def check_present_status(write_data,payload):
     for item in write_data:
-        if(item['Line Name'] == payload['Line Name'] and item['Placement Name'] == payload['Placement Name']):
+        if(item['Line Name'] == payload['Line Name'] and item['Placement Name'] == payload['Placement Name'] and payload['UUID'] == item['UUID']):
             return True
     return False
 
