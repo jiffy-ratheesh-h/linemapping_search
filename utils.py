@@ -89,8 +89,11 @@ def custom_line_name_search(traffic,track_data,traffic_data,traffic_column,track
     write_data = []
     try:
         track_data_copy = copy.deepcopy(track_data)
-        if(recheck == False and len(track_data_copy) >= 2):
-            track_data_copy = custom_remove_common_words(track_data_copy,track_column)
+        print(f"Len of Track Data = {len(track_data_copy)}")
+        if(recheck == False):
+            if(len(track_data_copy) >= 2):
+                print("Entered on Cleansing of removing common keyword")
+                track_data_copy = custom_remove_common_words(track_data_copy,track_column)
         for track in track_data_copy:
             if(traffic[traffic_column] is not None and track[track_column] is not None):
                 track_obj = {}
