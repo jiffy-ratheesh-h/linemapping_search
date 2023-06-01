@@ -94,7 +94,6 @@ def custom_line_name_search(traffic,track_data,traffic_data,traffic_column,track
         if(recheck == False):
             if(len(track_data_copy) >= 2):
                 print("Entered on Cleansing of removing common keyword")
-
                 track_data_copy = custom_remove_common_words(track_data_copy,track_column)
         for track in track_data_copy:
             if(traffic[traffic_column] is not None and track[track_column] is not None):
@@ -106,6 +105,11 @@ def custom_line_name_search(traffic,track_data,traffic_data,traffic_column,track
                 response = custom_search_here(traffic,track,traffic_data,traffic_column,track_column)
                 print(traffic[traffic_column],"  X  ",track[track_column])
                 print(response)
+                if(response['status'] == False):
+                    t_data = copy.deepcopy(track_obj)
+                    response = custom_search_here(traffic,t_data,traffic_data,traffic_column,track_column)
+                    print(traffic[traffic_column],"  X  ",track[track_column])
+                    print(response)
                 match_keyword = response['match_keyword'].strip()
                 if(response['word_match'] is None):
                     response['word_match'] = ""
