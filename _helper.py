@@ -639,11 +639,13 @@ def get_ranked(write_data):
 def custom_remove_common_words(filter_line_name_data,column_name):
     keyword = filter_line_name_data[0][column_name]
     keyword = remove_spcl_characters(keyword).lower().split(" ")
+    for linename in filter_line_name_data:
+        linename['BackupLineName'] = linename[column_name]
     if(len(keyword) >= 1):
         for word in keyword:
             count = 0
             for line_name in filter_line_name_data:
-                line_name['BackupLineName'] = line_name[column_name]
+                print("BKP",line_name['BackupLineName'])
                 if(word in str(line_name[column_name]).lower()):
                     count += 1
             if(count == len(filter_line_name_data)):
@@ -652,7 +654,7 @@ def custom_remove_common_words(filter_line_name_data,column_name):
                     replace_space = itm[column_name].replace(" ","")
                     if(itm[column_name] == "" or len(itm[column_name]) == 1 or itm[column_name].isnumeric() or len(replace_space) == 1 or replace_space.isnumeric()):
                         itm[column_name] = itm['BackupLineName']
-                        del itm['BackupLineName']
+                    del itm['BackupLineName']
     return filter_line_name_data
 
 def custom_search_here(traffic,track,traffic_data,traffic_column,track_column):
